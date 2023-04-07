@@ -28,7 +28,7 @@ class LeNet(nn.Module):
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
-        out = out.flatten()
+        out = out.flatten(1)
         out = self.fc1(out)
         out = self.fc2(out)
         out = self.fc3(out)
