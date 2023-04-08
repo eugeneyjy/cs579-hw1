@@ -1,12 +1,12 @@
 import torch.nn as nn
 
 class LeNet(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, channels=1):
         # (C, H, W)
         # input (1, 32, 32)
         super(LeNet, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(1, 6, 5), # (6, 28, 28)
+            nn.Conv2d(channels, 6, 5), # (6, 28, 28)
             nn.ReLU(),
             nn.MaxPool2d(2, 2) # (6, 14, 14)
         )

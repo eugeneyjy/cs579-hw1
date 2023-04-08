@@ -24,9 +24,12 @@ logging.basicConfig(
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def get_model(arch, num_classes):
-    if arch == 'lenet':
-        return LeNet(num_classes).to(device), (32, 32)
+def get_model(args, num_classes):
+    if args.arch == 'lenet':
+        channels = 1
+        if args.dataset == 'cifar10':
+            channels = 3
+        return LeNet(num_classes, channels).to(device), (32, 32)
 
 def get_criterion(loss):
     if loss == 'crossEntropy':
@@ -98,6 +101,8 @@ def get_plot_title(args):
 
     if (args.dataset == 'mnist'):
         dataset_name = 'MNIST'
+    elif (args.dataset == 'cifar10'):
+        dataset_name = 'CIFAR10'
 
     return f'{model_name} Trained On {dataset_name}'
 
@@ -156,7 +161,7 @@ if __name__ == '__main__':
 
     set_seed(args.seed)
 
-    model, input_size = get_model(args.arch, 10)
+    model, input_size = get_model(args, 10)
 
     transform = transforms.Compose([
         transforms.Resize(input_size),
