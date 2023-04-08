@@ -8,8 +8,10 @@ from torchvision import transforms
 from models.lenet.arch import LeNet
 from datasets import data_loader
 from valid import validation_metrics
+from path import MODEL_DIR, REPORT_DIR
 
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import logging
 
@@ -24,7 +26,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def get_model(arch, num_classes):
     if arch == 'lenet':
-        return LeNet(num_classes).to(device)
+        return LeNet(num_classes).to(device), (32, 32)
 
 def get_criterion(loss):
     if loss == 'crossEntropy':
@@ -34,8 +36,15 @@ def get_optimizer(args, parameters):
     if args.optimizer == 'adam':
         return torch.optim.Adam(parameters, args.lr, amsgrad=True)
 
-def train_model(model, train_loader, val_loader, epochs, optimizer, criterion):
-    for epoch in range(epochs):
+def train_model(model, train_loader, val_loader, optimizer, criterion, args):
+    train_losses = []
+    train_accs = []
+    val_losses = []
+    val_accs = []
+
+    min_val_loss = float('inf')
+
+    for epoch in range(args.epochs):
         model.train()
         sum_loss = 0
         correct = 0
@@ -51,14 +60,74 @@ def train_model(model, train_loader, val_loader, epochs, optimizer, criterion):
             loss.backward()
             optimizer.step()
 
-            sum_loss += loss
+            sum_loss += loss.item()
             correct += (pred_label == target).sum()
             total += len(data)
 
+        train_loss, train_acc = sum_loss/total, correct/total
         val_loss, val_acc = validation_metrics(model, val_loader, criterion)
 
+        train_losses.append(train_loss)
+        train_accs.append(train_acc.cpu())
+        val_losses.append(val_loss)
+        val_accs.append(val_acc.cpu())
+
         logging.info("epoch %d train loss %f, train acc %.3f, val loss %f, val acc %.3f" % 
-                    (epoch, sum_loss/total, correct/total, val_loss, val_acc))
+                    (epoch, train_loss, train_acc, val_loss, val_acc))
+
+        if not args.no_save:
+            if val_loss < min_val_loss:
+                min_val_loss = val_loss
+                logging.info("Saving better model")
+                save_model(epoch, model, optimizer, args)
+
+    return train_losses, train_accs, val_losses, val_accs
+
+def save_model(epoch, model, optimizer, args):
+    path_name = f'{MODEL_DIR}/{args.arch}/{args.arch}-{args.dataset}.pth'
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict()},
+        path_name
+    )
+
+def get_plot_title(args):
+    if (args.arch == 'lenet'):
+        model_name = 'LeNet'
+
+    if (args.dataset == 'mnist'):
+        dataset_name = 'MNIST'
+
+    return f'{model_name} Trained On {dataset_name}'
+
+def plot_results(args, results):
+    # result: (train_losses, train_accs, val_losses, val_accs)
+    epochs = range(len(results[0]))
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(8)
+    fig.set_figheight(5)
+    fig.suptitle(get_plot_title(args))
+
+    # Plot training and validation losses 
+    ax1.set_title('Model Loss')
+    ax1.plot(epochs, results[0], label='training')
+    ax1.plot(epochs, results[2], label='validation')
+    ax1.legend(loc='upper left')
+
+    # Plot training and validation accuracies
+    ax2.set_title('Model Accuracy')
+    ax2.plot(epochs, results[1], label='training')
+    ax2.plot(epochs, results[3], label='validation')
+    ax2.legend(loc='upper left')
+
+    plt.savefig(f'{REPORT_DIR}/{args.arch}-{args.dataset}.png')
+    plt.show()
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
 
 
 if __name__ == '__main__':
@@ -76,19 +145,28 @@ if __name__ == '__main__':
     parser.add_argument('--loss', type=str, default='crossEntropy', metavar='crossEntropy',
                         help='loss function (default= crossEntropy)')
     parser.add_argument('--optimizer', type=str, default='adam', metavar='adam',
-                        help='optimization algorithm (default= adam)')
-        
+                        help='optimization algorithm (default: adam)')
+    parser.add_argument('--no-save', action='store_true',
+                        help='specify if want the trained model be saved (default: True)')
+    parser.add_argument('--seed', type=int, default=113, metavar='113',
+                        help='specify seed for random (default: 113)')
+                    
     args = parser.parse_args()
     print(args)
 
+    set_seed(args.seed)
+
+    model, input_size = get_model(args.arch, 10)
+
     transform = transforms.Compose([
-        transforms.Resize((32, 32)),
+        transforms.Resize(input_size),
         transforms.ToTensor()
     ])
 
     train_loader, val_loader = data_loader(args.dataset, args.batch_size, transform=transform)
-    model = get_model(args.arch, 10)
     criterion = get_criterion(args.loss)
     optimizer = get_optimizer(args, model.parameters())
 
-    train_model(model, train_loader, val_loader, args.epochs, optimizer, criterion)
+    results = train_model(model, train_loader, val_loader, optimizer, criterion, args)
+
+    plot_results(args, results)

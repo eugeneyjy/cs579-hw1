@@ -2,10 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
-from pathlib import Path
-
-REPO_DIR = Path(__file__).resolve().parent
-DATASETS_DIR = REPO_DIR / 'datasets'
+from path import DATASETS_DIR
 
 def data_loader(dataset, batch_size, transform, train=True, valid_size=0.2):
     datasets_dict = {
