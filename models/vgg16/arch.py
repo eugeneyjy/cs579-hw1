@@ -70,10 +70,13 @@ class VGG16(nn.Module):
 
         self.fc1 = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096), # (N, 4096)
+            nn.Dropout(0.5),
             nn.ReLU()
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 4096) # (N, 4096)
+            nn.Linear(4096, 4096), # (N, 4096)
+            nn.Dropout(0.5),
+            nn.ReLU()
         )
         self.fc3 = nn.Sequential(
             nn.Linear(4096, num_classes) # (N, num_classes)
