@@ -72,7 +72,13 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
             correct += (pred_label == target).sum()
             total += len(data)
 
+            if i % 64 == 0:
+                logging.info("Epoch [%d/%d] || Step [%d/%d] || Loss: [%f] || Acc: [%f]" % 
+                             (epoch, args.epochs, i, len(train_loader), sum_loss/total, correct/total))
+
         train_loss, train_acc = sum_loss/total, correct/total
+
+        logging.info("calculating validation metrics")
         val_loss, val_acc = validation_metrics(model, val_loader, criterion)
 
         train_losses.append(train_loss)
@@ -80,7 +86,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
         val_losses.append(val_loss)
         val_accs.append(val_acc.cpu())
 
-        logging.info("epoch %d train loss %f, train acc %.3f, val loss %f, val acc %.3f" % 
+        logging.info("Epoch %d train loss %f, train acc %.3f, val loss %f, val acc %.3f" % 
                     (epoch, train_loss, train_acc, val_loss, val_acc))
 
         if not args.no_save:

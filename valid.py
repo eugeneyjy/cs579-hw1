@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -7,7 +8,7 @@ def validation_metrics(model, loader, criterion):
     sum_loss = 0
     correct = 0
     total = 0
-    for i, (data, target) in enumerate(loader):
+    for i, (data, target) in tqdm(enumerate(loader), total=len(loader)):
         data, target = data.to(device), target.to(device)
         pred = model(data)
         _, pred_label = torch.max(pred, 1)
