@@ -9,7 +9,7 @@ from models.lenet.arch import LeNet
 from models.vgg16.arch import VGG16
 from datasets import data_loader
 from valid import validation_metrics
-from path import MODEL_DIR, REPORT_DIR
+from path import get_model_dir, get_report_dir
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import logging
 
 logging.basicConfig(
+    stream=sys.stdout,
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
@@ -106,7 +107,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
     return train_losses, train_accs, val_losses, val_accs
 
 def save_model(epoch, model, optimizer, prev_results, args):
-    path_name = f'{MODEL_DIR}/{args.arch}/{args.arch}-{args.dataset}.pth'
+    path_name = f'{get_model_dir()}/{args.arch}/{args.arch}-{args.dataset}.pth'
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
@@ -155,7 +156,7 @@ def plot_results(args, results):
     ax2.set_xlabel('Epoch')
     ax2.legend(loc='upper left')
 
-    plt.savefig(f'{REPORT_DIR}/{args.arch}-{args.dataset}.png')
+    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}.png')
     plt.show()
 
 def set_seed(seed):
