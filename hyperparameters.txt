@@ -1,0 +1,19 @@
+LeNet
+-- MNIST
+    batch-size: 128
+    epochs: 20
+    lr: 0.001
+-- CIFAR10
+    batch-size: 128
+    epochs: 30
+    lr: 0.001
+
+VGG16
+-- MNIST
+    batch-size: 16
+    epochs: 5
+    lr: 0.00005
+-- CIFAR10
+    batch-size: 16
+    epochs: 10
+    lr: 0.00005
