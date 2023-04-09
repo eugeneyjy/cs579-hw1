@@ -73,8 +73,10 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
             total += len(data)
 
             if i % 64 == 0:
+                print(f'Prediction: {pred_label}')
+                print(f'Target:     {target}')
                 logging.info("Epoch [%d/%d] || Step [%d/%d] || Loss: [%f] || Acc: [%f]" % 
-                             (epoch, args.epochs, i, len(train_loader), sum_loss/total, correct/total))
+                             (epoch+1, args.epochs, i, len(train_loader), sum_loss/total, correct/total))
 
         train_loss, train_acc = sum_loss/total, correct/total
 
@@ -87,22 +89,32 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
         val_accs.append(val_acc.cpu())
 
         logging.info("Epoch %d train loss %f, train acc %.3f, val loss %f, val acc %.3f" % 
-                    (epoch, train_loss, train_acc, val_loss, val_acc))
+                    (epoch+1, train_loss, train_acc, val_loss, val_acc))
 
         if not args.no_save:
             if val_loss < min_val_loss:
                 min_val_loss = val_loss
                 logging.info("Saving better model")
-                save_model(epoch, model, optimizer, args)
+                results = {
+                    'train_accs': train_accs,
+                    'train_losses': train_losses,
+                    'val_accs': val_accs,
+                    'val_losses': val_losses
+                }
+                save_model(epoch+1, model, optimizer, results, args)
 
     return train_losses, train_accs, val_losses, val_accs
 
-def save_model(epoch, model, optimizer, args):
+def save_model(epoch, model, optimizer, prev_results, args):
     path_name = f'{MODEL_DIR}/{args.arch}/{args.arch}-{args.dataset}.pth'
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict()},
+        'optimizer_state_dict': optimizer.state_dict(),
+        'train_accs': prev_results['train_accs'],
+        'train_losses': prev_results['train_losses'],
+        'val_accs': prev_results['val_accs'],
+        'val_losses': prev_results['val_losses']},
         path_name
     )
 
@@ -121,7 +133,7 @@ def get_plot_title(args):
 
 def plot_results(args, results):
     # result: (train_losses, train_accs, val_losses, val_accs)
-    epochs = range(len(results[0]))
+    epochs = range(1, len(results[0])+1)
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(8)
     fig.set_figheight(5)
