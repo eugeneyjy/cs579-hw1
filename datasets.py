@@ -54,18 +54,3 @@ def batch_mean_and_std(loader):
         std += images.std()
     
     return mean/len(loader), std/len(loader)
-
-
-def main():
-    transform = transforms.Compose([
-        transforms.Resize((32, 32)),
-        transforms.ToTensor()
-        # transforms.Normalize(mean=(0.1309,), std=(0.2893,))
-    ])
-
-    train_loader, valid_loader = data_loader('cifar10', 64, transform, train=True)
-    # first_image = train_loader[0][0].squeeze()
-    # plt.imshow(first_image, cmap='gray')
-    # plt.show()
-
-main()
