@@ -73,8 +73,8 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
             total += len(data)
 
             if i % 64 == 0:
-                print(f'Prediction: {pred_label}')
-                print(f'Target:     {target}')
+                # print(f'Prediction: {pred_label}')
+                # print(f'Target:     {target}')
                 logging.info("Epoch [%d/%d] || Step [%d/%d] || Loss: [%f] || Acc: [%f]" % 
                              (epoch+1, args.epochs, i, len(train_loader), sum_loss/total, correct/total))
 
@@ -123,6 +123,8 @@ def get_plot_title(args):
         model_name = 'LeNet'
     elif (args.arch == 'vgg16'):
         model_name = 'VGG16'
+    elif (args.arch == 'resnet18'):
+        model_name = 'ResNet18'
 
     if (args.dataset == 'mnist'):
         dataset_name = 'MNIST'
@@ -143,12 +145,14 @@ def plot_results(args, results):
     ax1.set_title('Model Loss')
     ax1.plot(epochs, results[0], label='training')
     ax1.plot(epochs, results[2], label='validation')
+    ax1.set_xlabel('Epoch')
     ax1.legend(loc='upper left')
 
     # Plot training and validation accuracies
     ax2.set_title('Model Accuracy')
     ax2.plot(epochs, results[1], label='training')
     ax2.plot(epochs, results[3], label='validation')
+    ax2.set_xlabel('Epoch')
     ax2.legend(loc='upper left')
 
     plt.savefig(f'{REPORT_DIR}/{args.arch}-{args.dataset}.png')
