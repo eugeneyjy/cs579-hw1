@@ -201,6 +201,8 @@ if __name__ == '__main__':
     criterion = get_criterion(args.loss)
     optimizer = get_optimizer(args, model.parameters())
 
+    logging.info("Training on %s" % (device))
+
     results = train_model(model, train_loader, val_loader, optimizer, criterion, args)
 
     plot_results(args, results)
