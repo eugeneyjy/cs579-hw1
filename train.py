@@ -6,6 +6,7 @@ import torch.nn as nn
 from torchvision import transforms
 
 from models.lenet.arch import LeNet
+from models.vgg16.arch import VGG16
 from datasets import data_loader
 from valid import validation_metrics
 from path import MODEL_DIR, REPORT_DIR
@@ -25,11 +26,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def get_model(args, num_classes):
+    # Set number of input channels based on dataset
+    channels = 1
+    if args.dataset == 'cifar10':
+        channels = 3
+
     if args.arch == 'lenet':
-        channels = 1
-        if args.dataset == 'cifar10':
-            channels = 3
         return LeNet(num_classes, channels).to(device), (32, 32)
+    elif args.arch == 'vgg16':
+        return VGG16(num_classes, channels).to(device), (224, 224)
 
 def get_criterion(loss):
     if loss == 'crossEntropy':
@@ -98,6 +103,8 @@ def save_model(epoch, model, optimizer, args):
 def get_plot_title(args):
     if (args.arch == 'lenet'):
         model_name = 'LeNet'
+    elif (args.arch == 'vgg16'):
+        model_name = 'VGG16'
 
     if (args.dataset == 'mnist'):
         dataset_name = 'MNIST'
