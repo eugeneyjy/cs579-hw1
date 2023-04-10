@@ -48,6 +48,20 @@ def get_criterion(loss):
 def get_optimizer(args, parameters):
     if args.optimizer == 'adam':
         return torch.optim.Adam(parameters, args.lr, amsgrad=True)
+    elif args.optimizer == 'sgd':
+        return torch.optim.SGD(parameters, args.lr, 0.9)
+    
+def get_transform(args, input_size):
+    all_transforms = [transforms.Resize(input_size)]
+
+    if args.horizontal_flip:
+        all_transforms.append(transforms.RandomHorizontalFlip())
+    if args.rotation:
+        all_transforms.append(transforms.RandomRotation(20))
+    
+    all_transforms.append(transforms.ToTensor())
+    
+    return transforms.Compose(all_transforms)
 
 def train_model(model, train_loader, val_loader, optimizer, criterion, args):
     train_losses = []
@@ -160,7 +174,7 @@ def plot_results(args, results):
     ax2.set_xlabel('Epoch')
     ax2.legend(loc='upper left')
 
-    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}-{args.batch_size}-{args.optimizer}-{args.lr:.0e}.png')
+    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}-{args.batch_size}-{args.optimizer}-{args.lr:.0e}-{args.horizontal_flip}-{args.rotation}.png')
     plt.show()
 
 def set_seed(seed):
@@ -186,9 +200,13 @@ if __name__ == '__main__':
     parser.add_argument('--optimizer', type=str, default='adam', metavar='adam',
                         help='optimization algorithm (default: adam)')
     parser.add_argument('--no-save', action='store_true',
-                        help='specify if want the trained model be saved (default: True)')
+                        help='specify if do not want the trained model be saved (default: False)')
     parser.add_argument('--seed', type=int, default=113, metavar='113',
                         help='specify seed for random (default: 113)')
+    parser.add_argument('--horizontal-flip', action='store_true',
+                        help='specify if want the image data be flip horizontally at random (default: False)')
+    parser.add_argument('--rotation', action='store_true',
+                        help='specify if want the image data be rotate (-90, 90) degree at random (default: False)')
                     
     args = parser.parse_args()
     print(args)
@@ -197,10 +215,7 @@ if __name__ == '__main__':
 
     model, input_size = get_model(args, 10)
 
-    transform = transforms.Compose([
-        transforms.Resize(input_size),
-        transforms.ToTensor()
-    ])
+    transform = get_transform(args, input_size)
 
     train_loader, val_loader = data_loader(args.dataset, args.batch_size, transform=transform)
     criterion = get_criterion(args.loss)
