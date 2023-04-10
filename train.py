@@ -160,7 +160,7 @@ def plot_results(args, results):
     ax2.set_xlabel('Epoch')
     ax2.legend(loc='upper left')
 
-    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}.png')
+    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}-{args.batch_size}-{args.optimizer}-{args.lr:.0e}.png')
     plt.show()
 
 def set_seed(seed):
