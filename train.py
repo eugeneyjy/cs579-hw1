@@ -8,6 +8,7 @@ from torchvision import transforms
 
 from models.lenet.arch import LeNet
 from models.vgg16.arch import VGG16
+from models.resnet18.arch import ResNet18
 from datasets import data_loader
 from valid import validation_metrics
 from path import get_model_dir, get_report_dir
@@ -37,6 +38,8 @@ def get_model(args, num_classes):
         return LeNet(num_classes, channels).to(device), (32, 32)
     elif args.arch == 'vgg16':
         return VGG16(num_classes, channels).to(device), (224, 224)
+    elif args.arch == 'resnet18':
+        return ResNet18(num_classes, channels).to(device), (224, 224)
 
 def get_criterion(loss):
     if loss == 'crossEntropy':
