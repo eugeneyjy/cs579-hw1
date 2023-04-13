@@ -1,4 +1,4 @@
 datasets
-reports
+reports/*.png
 *__pycache__
 models/*/*.pth
