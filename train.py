@@ -11,7 +11,7 @@ from models.vgg16.arch import VGG16
 from models.resnet18.arch import ResNet18
 from datasets import data_loader
 from valid import validation_metrics
-from path import get_model_dir, get_report_dir
+from path import get_report_dir
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -88,7 +88,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
             optimizer.step()
 
             sum_loss += loss.item()
-            correct += (pred_label == target).sum()
+            correct += (pred_label == target).sum().item()
             total += len(data)
 
             if i % 64 == 0:
@@ -103,37 +103,31 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
         val_loss, val_acc = validation_metrics(model, val_loader, criterion)
 
         train_losses.append(train_loss)
-        train_accs.append(train_acc.cpu())
+        train_accs.append(train_acc)
         val_losses.append(val_loss)
-        val_accs.append(val_acc.cpu())
+        val_accs.append(val_acc)
 
         logging.info("Epoch %d train loss %f, train acc %.3f, val loss %f, val acc %.3f" % 
                     (epoch+1, train_loss, train_acc, val_loss, val_acc))
 
         if not args.no_save:
+            logging.info("Saving model")
             if val_loss < min_val_loss:
                 min_val_loss = val_loss
-                logging.info("Saving better model")
-                results = {
-                    'train_accs': train_accs,
-                    'train_losses': train_losses,
-                    'val_accs': val_accs,
-                    'val_losses': val_losses
-                }
-                save_model(epoch+1, model, optimizer, results, args)
+                save_model(epoch+1, model, optimizer, True, args)
+            save_model(epoch+1, model, optimizer, False, args)
 
     return train_losses, train_accs, val_losses, val_accs
 
-def save_model(epoch, model, optimizer, prev_results, args):
-    path_name = f'{get_model_dir()}/{args.arch}/{args.arch}-{args.dataset}.pth'
+def save_model(epoch, model, optimizer, best, args):
+    if best:
+        path_name = f'{get_report_dir()}/{args.arch}-{args.dataset}-best.pth'
+    else:
+        path_name = f'{get_report_dir()}/{args.arch}-{args.dataset}-last.pth'
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'train_accs': prev_results['train_accs'],
-        'train_losses': prev_results['train_losses'],
-        'val_accs': prev_results['val_accs'],
-        'val_losses': prev_results['val_losses']},
+        'optimizer_state_dict': optimizer.state_dict()},
         path_name
     )
 
@@ -174,8 +168,25 @@ def plot_results(args, results):
     ax2.set_xlabel('Epoch')
     ax2.legend(loc='upper left')
 
-    plt.savefig(f'{get_report_dir()}/{args.arch}-{args.dataset}-{args.batch_size}-{args.optimizer}-{args.lr:.0e}-{args.horizontal_flip}-{args.rotation}.png')
-    plt.show()
+    plt.savefig(f'{get_report_dir()}/plots.png')
+    # plt.show()
+
+def save_hyperparameters(args):
+    with open(f'{get_report_dir()}/hyperparameters.txt', 'w') as f:
+        f.write(f'{args}')
+
+def save_results(results):
+    train_loss = results[0]
+    train_acc = results[1]
+    val_loss = results[2]
+    val_acc = results[3]
+    epoch = len(train_loss)
+
+    with open(f'{get_report_dir()}/results.csv', 'w') as f:
+        f.write('train_loss,train_acc,val_loss,val_acc\n')
+        for i in range(epoch):
+            f.write(f'{train_loss[i]},{train_acc[i]},{val_loss[i]},{val_acc[i]}\n')
+
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -226,3 +237,5 @@ if __name__ == '__main__':
     results = train_model(model, train_loader, val_loader, optimizer, criterion, args)
 
     plot_results(args, results)
+    save_hyperparameters(args)
+    save_results(results)

@@ -16,7 +16,7 @@ def validation_metrics(model, loader, criterion):
         loss = criterion(pred, target)
 
         sum_loss += loss.item()
-        correct += (pred_label == target).sum()
+        correct += (pred_label == target).sum().item()
         total += len(data)
 
     return sum_loss/total, correct/total
