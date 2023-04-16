@@ -9,7 +9,7 @@ from torchvision import transforms
 from models.lenet.arch import LeNet
 from models.vgg16.arch import VGG16
 from models.resnet18.arch import ResNet18
-from datasets import data_loader
+from datasets import data_loader, batch_mean_and_std
 from valid import validation_metrics
 from path import get_report_dir
 
@@ -53,13 +53,18 @@ def get_optimizer(args, parameters):
     
 def get_transform(args, input_size):
     all_transforms = [transforms.Resize(input_size)]
-
+    
     if args.horizontal_flip:
         all_transforms.append(transforms.RandomHorizontalFlip())
     if args.rotation:
         all_transforms.append(transforms.RandomRotation(20))
     
     all_transforms.append(transforms.ToTensor())
+    
+    if args.dataset == 'mnist':
+        all_transforms.append(transforms.Normalize(mean = (0.13066062,), std = (0.30810776,)))
+    elif args.dataset == 'cifar10':
+        all_transforms.append(transforms.Normalize(mean = (0.4914009,0.48215896,0.4465308), std = (0.24703279,0.24348423,0.26158753)))
     
     return transforms.Compose(all_transforms)
 
@@ -99,8 +104,11 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
 
         train_loss, train_acc = sum_loss/total, correct/total
 
-        logging.info("calculating validation metrics")
-        val_loss, val_acc = validation_metrics(model, val_loader, criterion)
+        if val_loader:
+            logging.info("calculating validation metrics")
+            val_loss, val_acc = validation_metrics(model, val_loader, criterion)
+        else:
+            val_loss, val_acc = 0.0, 0.0
 
         train_losses.append(train_loss)
         train_accs.append(train_acc)
@@ -198,8 +206,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--arch', type=str, default='lenet', metavar='lenet',
                         help='model architecture to train on (default: lenet)')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='64',
-                        help='input batch size for training (default: 64)')
     parser.add_argument('--epochs', type=int, default=10, metavar='10',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.001, metavar='0.001',
@@ -210,6 +216,8 @@ if __name__ == '__main__':
                         help='loss function (default= crossEntropy)')
     parser.add_argument('--optimizer', type=str, default='adam', metavar='adam',
                         help='optimization algorithm (default: adam)')
+    parser.add_argument('--full-training', action='store_true',
+                        help='specify if want to train with full training data without having validation data (default: False)')
     parser.add_argument('--no-save', action='store_true',
                         help='specify if do not want the trained model be saved (default: False)')
     parser.add_argument('--seed', type=int, default=113, metavar='113',
@@ -228,7 +236,11 @@ if __name__ == '__main__':
 
     transform = get_transform(args, input_size)
 
-    train_loader, val_loader = data_loader(args.dataset, args.batch_size, transform=transform)
+    if args.full_training:
+        train_loader = data_loader(args.dataset, args.batch_size, transform=transform, valid_size=0)
+        val_loader = data_loader(args.dataset, args.batch_size, transform=transform, train=False)
+    else:
+        train_loader, val_loader = data_loader(args.dataset, args.batch_size, transform=transform)
     criterion = get_criterion(args.loss)
     optimizer = get_optimizer(args, model.parameters())
 

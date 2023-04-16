@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
 from path import DATASETS_DIR
@@ -28,13 +29,16 @@ def data_loader(dataset, batch_size, transform, train=True, valid_size=0.2):
             shuffle=True
         )
 
-        valid_loader = DataLoader(
-            dataset=valid_data,
-            batch_size=batch_size,
-            shuffle=True
-        )
+        if valid_size > 0:
+            valid_loader = DataLoader(
+                dataset=valid_data,
+                batch_size=batch_size,
+                shuffle=True
+            )
+            return train_loader, valid_loader
+        else:
+            return train_loader
 
-        return train_loader, valid_loader
     
     else:
         test_loader = DataLoader(
@@ -45,12 +49,14 @@ def data_loader(dataset, batch_size, transform, train=True, valid_size=0.2):
 
         return test_loader
     
-def batch_mean_and_std(loader):
-    mean = 0
-    std = 0
+def batch_mean_and_std(dataset_name):
+    if dataset_name == 'mnist':
+        data =  datasets.MNIST(root=DATASETS_DIR, train=True, download=True, transform=transforms.ToTensor())
+    elif dataset_name == 'cifar10':
+        data =  datasets.CIFAR10(root=DATASETS_DIR, train=True, download=True, transform=transforms.ToTensor())
 
-    for images, _ in loader:
-        mean += images.mean()
-        std += images.std()
-    
-    return mean/len(loader), std/len(loader)
+    imgs = [item[0] for item in data]
+    imgs = torch.stack(imgs, dim=0).numpy()
+    mean = imgs.mean(axis=(0,2,3))
+    std = imgs.std(axis=(0,2,3))
+    return mean, std
