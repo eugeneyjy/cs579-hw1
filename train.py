@@ -2,16 +2,11 @@ import argparse
 import sys
 
 import torch
-import torch.nn as nn
 
-from torchvision import transforms
-
-from models.lenet.arch import LeNet
-from models.vgg16.arch import VGG16
-from models.resnet18.arch import ResNet18
 from datasets import data_loader, batch_mean_and_std
 from valid import validation_metrics
 from path import get_report_dir
+from helper import get_model, get_criterion, get_optimizer, get_transform, get_plot_title, set_seed
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -26,47 +21,6 @@ logging.basicConfig(
 
 # Set device to cuda if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-def get_model(args, num_classes):
-    # Set number of input channels based on dataset
-    channels = 1
-    if args.dataset == 'cifar10':
-        channels = 3
-
-    if args.arch == 'lenet':
-        return LeNet(num_classes, channels).to(device), (32, 32)
-    elif args.arch == 'vgg16':
-        return VGG16(num_classes, channels).to(device), (224, 224)
-    elif args.arch == 'resnet18':
-        return ResNet18(num_classes, channels).to(device), (224, 224)
-
-def get_criterion(loss):
-    if loss == 'crossEntropy':
-        return nn.CrossEntropyLoss()
-    
-def get_optimizer(args, parameters):
-    if args.optimizer == 'adam':
-        return torch.optim.Adam(parameters, args.lr, amsgrad=True)
-    elif args.optimizer == 'sgd':
-        return torch.optim.SGD(parameters, args.lr, 0.9)
-    
-def get_transform(args, input_size):
-    all_transforms = [transforms.Resize(input_size)]
-    
-    if args.horizontal_flip:
-        all_transforms.append(transforms.RandomHorizontalFlip())
-    if args.rotation:
-        all_transforms.append(transforms.RandomRotation(20))
-    
-    all_transforms.append(transforms.ToTensor())
-    
-    if args.dataset == 'mnist':
-        all_transforms.append(transforms.Normalize(mean = (0.13066062,), std = (0.30810776,)))
-    elif args.dataset == 'cifar10':
-        all_transforms.append(transforms.Normalize(mean = (0.4914009,0.48215896,0.4465308), std = (0.24703279,0.24348423,0.26158753)))
-    
-    return transforms.Compose(all_transforms)
 
 def train_model(model, train_loader, val_loader, optimizer, criterion, args):
     train_losses = []
@@ -139,21 +93,6 @@ def save_model(epoch, model, optimizer, best, args):
         path_name
     )
 
-def get_plot_title(args):
-    if (args.arch == 'lenet'):
-        model_name = 'LeNet'
-    elif (args.arch == 'vgg16'):
-        model_name = 'VGG16'
-    elif (args.arch == 'resnet18'):
-        model_name = 'ResNet18'
-
-    if (args.dataset == 'mnist'):
-        dataset_name = 'MNIST'
-    elif (args.dataset == 'cifar10'):
-        dataset_name = 'CIFAR10'
-
-    return f'{model_name} Trained On {dataset_name}'
-
 def plot_results(args, results):
     # result: (train_losses, train_accs, val_losses, val_accs)
     epochs = range(1, len(results[0])+1)
@@ -196,18 +135,14 @@ def save_results(results):
             f.write(f'{train_loss[i]},{train_acc[i]},{val_loss[i]},{val_acc[i]}\n')
 
 
-def set_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--arch', type=str, default='lenet', metavar='lenet',
                         help='model architecture to train on (default: lenet)')
     parser.add_argument('--epochs', type=int, default=10, metavar='10',
                         help='number of epochs to train (default: 10)')
+    parser.add_argument('--batch-size', type=int, default=64, metavar='64',
+                        help='input batch size for training (default: 64)')
     parser.add_argument('--lr', type=float, default=0.001, metavar='0.001',
                         help='learning rate (default: 0.001)')
     parser.add_argument('--dataset', type=str, default='mnist', metavar='mnist',
