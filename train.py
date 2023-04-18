@@ -181,8 +181,9 @@ if __name__ == '__main__':
 
     logging.info("Training on %s" % (device))
 
+    save_hyperparameters(args)
+    
     results = train_model(model, train_loader, val_loader, optimizer, criterion, args)
 
     plot_results(args, results)
-    save_hyperparameters(args)
     save_results(results)
