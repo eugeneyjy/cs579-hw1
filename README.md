@@ -8,6 +8,21 @@ Replication of three Convolutional Neural Networks(CNNs) architecture: [LeNet](h
 ## ResNet18
 ![ResNet18 Architecture](https://miro.medium.com/v2/resize:fit:640/format:webp/1*kBlZtheCjJiA3F1e0IurCw.png)
 
+## Results
+### MNIST
+| Architecture | Accuracy |
+| :----------: | :------: |
+| LeNet        | 99.08%   |
+| VGG16        | 99.46%   |
+| ResNet18     | 99.65%   |
+### CIFAR10
+| Architecture | Accuracy |
+| :----------: | :------: |
+| LeNet        | 69.18%   |
+| VGG16        | ??.??%   |
+| ResNet18     | 90.93%   |
+
+
 ## Datasets
 `MNIST`: http://yann.lecun.com/exdb/mnist/  
 `CIFAR10`: https://www.cs.toronto.edu/~kriz/cifar.html
