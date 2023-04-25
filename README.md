@@ -19,7 +19,7 @@ Replication of three Convolutional Neural Networks(CNNs) architecture: [LeNet](h
 | Architecture | Accuracy |
 | :----------: | :------: |
 | LeNet        | 69.18%   |
-| VGG16        | ??.??%   |
+| VGG16        | 83.44%   |
 | ResNet18     | 90.93%   |
 
 
