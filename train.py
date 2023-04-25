@@ -161,6 +161,8 @@ if __name__ == '__main__':
                         help='specify if want the image data be flip horizontally at random (default: False)')
     parser.add_argument('--rotation', action='store_true',
                         help='specify if want the image data be rotate (-90, 90) degree at random (default: False)')
+    parser.add_argument('--normalize', action='store_true',
+                        help='specify if want to normalize data before train (default: False)')
                     
     args = parser.parse_args()
     print(args)

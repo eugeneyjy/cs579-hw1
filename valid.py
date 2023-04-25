@@ -41,8 +41,6 @@ if __name__ == '__main__':
 
     model, input_size = get_model(args, 10)
 
-    checkpoint = torch.load(args.path)
-    model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
     transform = get_transform(args, input_size)

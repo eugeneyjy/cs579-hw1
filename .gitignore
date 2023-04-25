@@ -3,3 +3,4 @@ reports/*.png
 reports/local_*
 *__pycache__
 models/*/*.pth
+models/pretrained

@@ -5,12 +5,11 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
 from path import DATASETS_DIR
 
-def data_loader(dataset, batch_size, transform, train=True, valid_size=0.2):
+def data_loader(dataset, batch_size, transform=None, train=True, valid_size=0.2):
     datasets_dict = {
         'mnist': datasets.MNIST,
         'cifar10': datasets.CIFAR10
     }
-
     data = datasets_dict[dataset](
         root=DATASETS_DIR,
         train=train,
@@ -44,7 +43,7 @@ def data_loader(dataset, batch_size, transform, train=True, valid_size=0.2):
         test_loader = DataLoader(
             dataset=data,
             batch_size=batch_size,
-            shuffle=True
+            shuffle=False
         )
 
         return test_loader

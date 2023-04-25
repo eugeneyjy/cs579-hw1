@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 from torchvision import transforms
 
@@ -17,11 +18,20 @@ def get_model(args, num_classes):
         channels = 3
 
     if args.arch == 'lenet':
-        return LeNet(num_classes, channels).to(device), (32, 32)
+        model = LeNet(num_classes, channels).to(device)
+        input_size = (32, 32)
     elif args.arch == 'vgg16':
-        return VGG16(num_classes, channels).to(device), (224, 224)
+        model = VGG16(num_classes, channels).to(device)
+        input_size = (224, 224)
     elif args.arch == 'resnet18':
-        return ResNet18(num_classes, channels).to(device), (224, 224)
+        model = ResNet18(num_classes, channels).to(device)
+        input_size = (224, 224)
+    
+    if 'path' in args and args.path:
+        checkpoint = torch.load(args.path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+    
+    return model, input_size
 
 def get_criterion(loss):
     if loss == 'crossEntropy':
@@ -43,10 +53,11 @@ def get_transform(args, input_size):
     
     all_transforms.append(transforms.ToTensor())
     
-    if args.dataset == 'mnist':
-        all_transforms.append(transforms.Normalize(mean = (0.13066062,), std = (0.30810776,)))
-    elif args.dataset == 'cifar10':
-        all_transforms.append(transforms.Normalize(mean = (0.4914009,0.48215896,0.4465308), std = (0.24703279,0.24348423,0.26158753)))
+    if args.normalize:
+        if args.dataset == 'mnist':
+            all_transforms.append(transforms.Normalize(mean = (0.13066062,), std = (0.30810776,)))
+        elif args.dataset == 'cifar10':
+            all_transforms.append(transforms.Normalize(mean = (0.4914009,0.48215896,0.4465308), std = (0.24703279,0.24348423,0.26158753)))
     
     return transforms.Compose(all_transforms)
 
@@ -69,3 +80,32 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
+
+def show_image(x, y):
+    print(x.shape)
+    img = x.detach().numpy().transpose(1, 2, 0)
+    plt.imshow(img)
+    plt.title(y)
+    plt.show()
+
+def map_label(number):
+    if number == 0:
+        return 'airplane'
+    elif number == 1:
+        return 'automobile'
+    elif number == 2:
+        return 'bird'
+    elif number == 3:
+        return 'cat'
+    elif number == 4:
+        return 'deer'
+    elif number == 5:
+        return 'dog'
+    elif number == 6:
+        return 'frog'
+    elif number == 7:
+        return 'horse'
+    elif number == 8:
+        return 'ship'
+    elif number == 9:
+        return 'truck'
