@@ -28,15 +28,26 @@ def PGD(x, y, model, loss, niter=5, epsilon=0.03, stepsize=2/255, randint=True):
     return (adv_imgs, y)
 
 
-def craft_adv_exp(model, loader, dataset, **kwargs):
-    if dataset == 'mnist':
-        create_mnist_label_dir(get_report_dir())
-    total_count = 0
-    for _, (x, y) in tqdm(enumerate(loader), total=len(loader)):
-       adv_exp, _ = PGD(x, y, model, **kwargs)
-       for j in range(adv_exp.shape[0]):
-           save_image(adv_exp[j, :, :, :], f'{get_report_dir()}/{y[j]}/{total_count}.png')
-           total_count += 1
+# def craft_adv_exp(model, loader, dataset, **kwargs):
+    # if dataset == 'mnist':
+    #     create_mnist_label_dir(get_report_dir())
+    # total_count = 0
+    # adv_exps = []
+    # labels = []
+    # for _, (x, y) in tqdm(enumerate(loader), total=len(loader)):
+    #     x_prime, y = PGD(x, y, model, **kwargs)
+    #    for j in range(adv_exp.shape[0]):
+    #        save_image(adv_exp[j, :, :, :], f'{get_report_dir()}/{y[j]}/{total_count}.png')
+    #        total_count += 1
+    #     adv_exps.append(x_prime)
+    #     labels.append(y)
+
+    # print(len(adv_exps))
+    # print(len(labels))
+    # adv_exps = torch.stack(adv_exps[:-1])
+    # labels = torch.stack(labels[:-1])
+    # return adv_exps, labels
+
            
 
 def get_PGD_kwargs(args):
@@ -76,5 +87,23 @@ if __name__ == '__main__':
 
     model, input = get_model(args, 10)
     transform = get_transform(args, input)
+    criterion = get_criterion(args.loss)
     test_loader = data_loader(args.dataset, 32, transform, train=False)
-    craft_adv_exp(model, test_loader, args.dataset, **get_PGD_kwargs(args))
+
+    model.eval()
+    sum_loss = 0
+    correct = 0
+    total = 0
+    for i, (data, target) in tqdm(enumerate(test_loader), total=len(test_loader)):
+        data, target = data.to(device), target.to(device)
+        data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
+        pred = model(data)
+        _, pred_label = torch.max(pred, 1)
+
+        loss = criterion(pred, target)
+
+        sum_loss += loss.item()
+        correct += (pred_label == target).sum().item()
+        total += len(data)
+
+    print(f'loss: {sum_loss/total}, acc: {correct/total}')
