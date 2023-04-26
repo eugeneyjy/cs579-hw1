@@ -19,3 +19,11 @@ def get_report_dir():
     if not os.path.exists(REPORT_DIR / CURRRENT_TIME):
         os.mkdir(REPORT_DIR / CURRRENT_TIME)
     return REPORT_DIR / CURRRENT_TIME
+
+def check_dir_exists(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+def create_mnist_label_dir(dir):
+    for i in range(10):
+        os.mkdir(f'{dir}/{i}')

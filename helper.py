@@ -53,7 +53,7 @@ def get_transform(args, input_size):
     
     all_transforms.append(transforms.ToTensor())
     
-    if args.normalize:
+    if 'normalize' in args and args.normalize:
         if args.dataset == 'mnist':
             all_transforms.append(transforms.Normalize(mean = (0.13066062,), std = (0.30810776,)))
         elif args.dataset == 'cifar10':
