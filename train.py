@@ -83,9 +83,9 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, args):
 
 def save_model(epoch, model, optimizer, best, args):
     if best:
-        path_name = f'{get_report_dir()}/{args.arch}-{args.dataset}-best.pth'
+        path_name = f'{get_report_dir()}/best.pth'
     else:
-        path_name = f'{get_report_dir()}/{args.arch}-{args.dataset}-last.pth'
+        path_name = f'{get_report_dir()}/last.pth'
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
