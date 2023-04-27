@@ -36,7 +36,8 @@ def calc_adv_acc(model, test_loader, criterion, args):
     total = 0
     for i, (data, target) in tqdm(enumerate(test_loader), total=len(test_loader)):
         data, target = data.to(device), target.to(device)
-        data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
+        if not args.clean:
+            data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
         # show_image(data[0].cpu(), map_label(target[0]))
         pred = model(data)
         _, pred_label = torch.max(pred, 1)
@@ -148,7 +149,9 @@ if __name__ == '__main__':
     parser.add_argument('--stepsize', type=float, default=2/255, metavar=2/255,
                         help='stepsize in PGD (default= 2/255)')  
     parser.add_argument('--randint', action='store_true',
-                        help='specify if start at random location for PGD (default= False)')  
+                        help='specify if start at random location for PGD (default= False)')
+    parser.add_argument('--clean', action='store_true',
+                        help='specify if want accuracy of clean test sample accuracy (default= False)')
 
     args = parser.parse_args()
     print(args)
