@@ -85,10 +85,22 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 def show_image(x, y):
-    print(x.shape)
     img = x.detach().numpy().transpose(1, 2, 0)
+    print(img.shape)
     plt.imshow(img)
     plt.title(y)
+    plt.show()
+
+# function adopted from https://adversarial-ml-tutorial.org/adversarial_examples/
+def plot_images(X,y,yhat,M,N):
+    f,ax = plt.subplots(M,N, sharex=True, sharey=True, figsize=(N*2,M*1.3))
+    for i in range(M):
+        for j in range(N):
+            ax[i][j].imshow(X[i*N+j].cpu().numpy().transpose(1, 2, 0))
+            title = ax[i][j].set_title("Ori: {}\nPred: {}".format(map_label(y[i*N+j]), map_label(yhat[i*N+j])))
+            plt.setp(title, color=('g' if yhat[i*N+j] == y[i*N+j] else 'r'))
+            ax[i][j].set_axis_off()
+    plt.tight_layout()
     plt.show()
 
 def map_label(number):

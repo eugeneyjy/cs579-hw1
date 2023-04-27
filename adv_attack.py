@@ -2,7 +2,7 @@ import argparse
 import torch
 import matplotlib.pyplot as plt
 
-from helper import get_model, get_criterion, get_transform, set_seed, show_image, map_label, device
+from helper import get_model, get_criterion, get_transform, set_seed, show_image, map_label, plot_images,device
 from path import get_report_dir, create_mnist_label_dir
 from datasets import data_loader
 from torchvision import transforms
@@ -38,10 +38,9 @@ def calc_adv_acc(model, test_loader, criterion, args):
         data, target = data.to(device), target.to(device)
         if not args.clean:
             data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
-        # show_image(data[0].cpu(), map_label(target[0]))
         pred = model(data)
         _, pred_label = torch.max(pred, 1)
-        # print(map_label(pred_label[0]))
+        # plot_images(data, target, pred_label, 3, 6)
 
         loss = criterion(pred, target)
 
@@ -50,6 +49,7 @@ def calc_adv_acc(model, test_loader, criterion, args):
         total += len(data)
 
     print(f'loss: {sum_loss/total}, acc: {correct/total}')
+    print(f'correct: {correct}')
     return sum_loss/total, correct/total
 
 def niter_vs_acc(model, test_loader, criterion, args):
@@ -162,6 +162,6 @@ if __name__ == '__main__':
     criterion = get_criterion(args.loss)
     test_loader = data_loader(args.dataset, 32, transform, train=False)
 
-    # loss, acc = calc_adv_acc(model, test_loader, criterion, args)
+    loss, acc = calc_adv_acc(model, test_loader, criterion, args)
     # niter_vs_acc(model, test_loader, criterion, args)
     # epsilon_vs_acc(model, test_loader, criterion, args)
