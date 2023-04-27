@@ -1,0 +1,1 @@
+python adv_attack.py --arch=resnet18 --dataset=cifar10 --path=models/pretrained/resnet-cifar10-ori/best.pth --epsilon=0.03 --niter=5 --randint

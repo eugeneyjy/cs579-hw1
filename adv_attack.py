@@ -1,5 +1,6 @@
 import argparse
-import torch 
+import torch
+import matplotlib.pyplot as plt
 
 from helper import get_model, get_criterion, get_transform, set_seed, show_image, map_label, device
 from path import get_report_dir, create_mnist_label_dir
@@ -27,6 +28,74 @@ def PGD(x, y, model, loss, niter=5, epsilon=0.03, stepsize=2/255, randint=True):
     
     return (adv_imgs, y)
 
+
+def calc_adv_acc(model, test_loader, criterion, args):
+    model.eval()
+    sum_loss = 0
+    correct = 0
+    total = 0
+    for i, (data, target) in tqdm(enumerate(test_loader), total=len(test_loader)):
+        data, target = data.to(device), target.to(device)
+        data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
+        # show_image(data[0].cpu(), map_label(target[0]))
+        pred = model(data)
+        _, pred_label = torch.max(pred, 1)
+        # print(map_label(pred_label[0]))
+
+        loss = criterion(pred, target)
+
+        sum_loss += loss.item()
+        correct += (pred_label == target).sum().item()
+        total += len(data)
+
+    print(f'loss: {sum_loss/total}, acc: {correct/total}')
+    return sum_loss/total, correct/total
+
+def niter_vs_acc(model, test_loader, criterion, args):
+    losses = []
+    accs = []
+    niters = [1,2,3,4,5,10,20,30,40,80,100]
+    for i in niters:
+        args.niter = i
+        print(args)
+        loss, acc = calc_adv_acc(model, test_loader, criterion, args)
+        losses.append(loss)
+        accs.append(acc)
+        print(f'loss:{loss}, acc:{acc}')
+    
+    plt.plot(niters, accs)
+    plt.title(f'{args.arch}-{args.dataset} PGD')
+    plt.xlabel("# iterations")
+    plt.ylabel("Accuracy")
+    plt.savefig(f'{get_report_dir()}/niters_vs_accs.png')
+    
+    with open(f'{get_report_dir()}/results.csv', 'w') as f:
+        f.write('niters,accs,loss\n')
+        for i in range(len(accs)):
+            f.write(f'{niters[i]},{accs[i]},{losses[i]}\n')
+
+def epsilon_vs_acc(model, test_loader, criterion, args):
+    losses = []
+    accs = []
+    epsilon = [0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 1.0]
+    for i in epsilon:
+        args.epsilon = i
+        print(args)
+        loss, acc = calc_adv_acc(model, test_loader, criterion, args)
+        losses.append(loss)
+        accs.append(acc)
+        print(f'loss:{loss}, acc:{acc}')
+    
+    plt.plot(epsilon, accs)
+    plt.title(f'{args.arch}-{args.dataset} PGD')
+    plt.xlabel("Epsilon")
+    plt.ylabel("Accuracy")
+    plt.savefig(f'{get_report_dir()}/epsilon_vs_accs.png')
+
+    with open(f'{get_report_dir()}/results.csv', 'w') as f:
+        f.write('epsilon,accs,loss\n')
+        for i in range(len(accs)):
+            f.write(f'{epsilon[i]},{accs[i]},{losses[i]}\n')
 
 # def craft_adv_exp(model, loader, dataset, **kwargs):
     # if dataset == 'mnist':
@@ -90,20 +159,6 @@ if __name__ == '__main__':
     criterion = get_criterion(args.loss)
     test_loader = data_loader(args.dataset, 32, transform, train=False)
 
-    model.eval()
-    sum_loss = 0
-    correct = 0
-    total = 0
-    for i, (data, target) in tqdm(enumerate(test_loader), total=len(test_loader)):
-        data, target = data.to(device), target.to(device)
-        data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
-        pred = model(data)
-        _, pred_label = torch.max(pred, 1)
-
-        loss = criterion(pred, target)
-
-        sum_loss += loss.item()
-        correct += (pred_label == target).sum().item()
-        total += len(data)
-
-    print(f'loss: {sum_loss/total}, acc: {correct/total}')
+    # loss, acc = calc_adv_acc(model, test_loader, criterion, args)
+    # niter_vs_acc(model, test_loader, criterion, args)
+    # epsilon_vs_acc(model, test_loader, criterion, args)
