@@ -165,6 +165,8 @@ if __name__ == '__main__':
                         help='specify if want to normalize data before train (default: False)')
     parser.add_argument('--dropout', type=float, default=0, metavar='0',
                         help='specify dropout rate for model when training (default: 0)')
+    parser.add_argument('--weight-decay', type=float, default=0, metavar='0',
+                        help='specify weight decay rate for optimizer (default: 0)')
                        
     args = parser.parse_args()
     print(args)

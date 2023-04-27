@@ -24,7 +24,10 @@ def get_model(args, num_classes):
         model = VGG16(num_classes, channels).to(device)
         input_size = (224, 224)
     elif args.arch == 'resnet18':
-        model = ResNet18(num_classes, channels, args.dropout).to(device)
+        if 'dropout' in args:
+            model = ResNet18(num_classes, channels, args.dropout).to(device)
+        else:
+            model = ResNet18(num_classes, channels).to(device)
         input_size = (224, 224)
     
     if 'path' in args and args.path:
@@ -39,7 +42,7 @@ def get_criterion(loss):
     
 def get_optimizer(args, parameters):
     if args.optimizer == 'adam':
-        return torch.optim.Adam(parameters, args.lr, amsgrad=True)
+        return torch.optim.Adam(parameters, args.lr, amsgrad=True, weight_decay=args.weight_decay)
     elif args.optimizer == 'sgd':
         return torch.optim.SGD(parameters, args.lr, 0.9)
     
