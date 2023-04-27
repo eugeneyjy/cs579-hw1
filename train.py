@@ -163,7 +163,9 @@ if __name__ == '__main__':
                         help='specify if want the image data be rotate (-90, 90) degree at random (default: False)')
     parser.add_argument('--normalize', action='store_true',
                         help='specify if want to normalize data before train (default: False)')
-                    
+    parser.add_argument('--dropout', type=float, default=0, metavar='0',
+                        help='specify dropout rate for model when training (default: 0)')
+                       
     args = parser.parse_args()
     print(args)
 

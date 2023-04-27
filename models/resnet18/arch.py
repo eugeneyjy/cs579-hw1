@@ -28,7 +28,7 @@ class BasicBlock(nn.Module):
 
 
 class ResNet18(nn.Module):
-    def __init__(self, num_classes, channels=3):
+    def __init__(self, num_classes, channels=3, dropout=0):
         super(ResNet18, self).__init__()
 
         self.curr_in_channels = 64
@@ -43,6 +43,7 @@ class ResNet18(nn.Module):
         self.conv4_x = self._make_layer(256, 2, 2)
         self.conv5_x = self._make_layer(512, 2, 2)
         self.avgPool = nn.AvgPool2d(7, 1)
+        self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(512, num_classes)
 
     def _make_layer(self, out_channels, num_blocks, stride):
@@ -69,5 +70,6 @@ class ResNet18(nn.Module):
         out = self.conv5_x(out)
         out = self.avgPool(out)
         out = out.flatten(1)
+        out = self.dropout(out)
         out = self.fc(out)
         return out

@@ -24,7 +24,7 @@ def get_model(args, num_classes):
         model = VGG16(num_classes, channels).to(device)
         input_size = (224, 224)
     elif args.arch == 'resnet18':
-        model = ResNet18(num_classes, channels).to(device)
+        model = ResNet18(num_classes, channels, args.dropout).to(device)
         input_size = (224, 224)
     
     if 'path' in args and args.path:
