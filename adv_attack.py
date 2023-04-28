@@ -10,10 +10,14 @@ from torchvision.utils import save_image
 from tqdm import tqdm
 
 
-def PGD(x, y, model, loss, niter=5, epsilon=0.03, stepsize=2/255, randint=True):
+def PGD(x, y, model, loss, niter=5, epsilon=0.03, stepsize=2/255, randinit=True):
+    # make model train mode because of some weird behavior
+    # without this PGD is weird that it drive resnet accuracy to 0 even for 1 iteration
+    model.train()
+
     x, y = x.to(device), y.to(device)
-    adv_imgs = x.clone().to(device)
-    if randint:
+    adv_imgs = x.clone().to(device).detach()
+    if randinit:
         adv_imgs = adv_imgs + torch.empty_like(adv_imgs).uniform_(-epsilon, epsilon)
         adv_imgs = torch.clamp(adv_imgs, 0, 1).detach_()
 
@@ -25,12 +29,10 @@ def PGD(x, y, model, loss, niter=5, epsilon=0.03, stepsize=2/255, randint=True):
         adv_imgs = adv_imgs + stepsize*adv_imgs.grad.sign()
         delta = torch.clamp(adv_imgs - x, -epsilon, epsilon)
         adv_imgs = torch.clamp(x + delta, 0, 1).detach_()
-    
-    return (adv_imgs, y)
-
+            
+    return (adv_imgs.detach(), y)
 
 def calc_adv_acc(model, test_loader, criterion, args):
-    model.eval()
     sum_loss = 0
     correct = 0
     total = 0
@@ -38,9 +40,10 @@ def calc_adv_acc(model, test_loader, criterion, args):
         data, target = data.to(device), target.to(device)
         if not args.clean:
             data, _ = PGD(data, target, model, **get_PGD_kwargs(args))
+        model.eval()
         pred = model(data)
         _, pred_label = torch.max(pred, 1)
-        # plot_images(data, target, pred_label, 3, 6)
+        # plot_images(data, target, pred_label, 2, 5)
 
         loss = criterion(pred, target)
 
@@ -98,27 +101,14 @@ def epsilon_vs_acc(model, test_loader, criterion, args):
         for i in range(len(accs)):
             f.write(f'{epsilon[i]},{accs[i]},{losses[i]}\n')
 
-# def craft_adv_exp(model, loader, dataset, **kwargs):
-    # if dataset == 'mnist':
-    #     create_mnist_label_dir(get_report_dir())
-    # total_count = 0
-    # adv_exps = []
-    # labels = []
-    # for _, (x, y) in tqdm(enumerate(loader), total=len(loader)):
-    #     x_prime, y = PGD(x, y, model, **kwargs)
-    #    for j in range(adv_exp.shape[0]):
-    #        save_image(adv_exp[j, :, :, :], f'{get_report_dir()}/{y[j]}/{total_count}.png')
-    #        total_count += 1
-    #     adv_exps.append(x_prime)
-    #     labels.append(y)
-
-    # print(len(adv_exps))
-    # print(len(labels))
-    # adv_exps = torch.stack(adv_exps[:-1])
-    # labels = torch.stack(labels[:-1])
-    # return adv_exps, labels
-
-           
+def craft_adv_exp(model, loader, args):
+    x, y = next(iter(loader))
+    adv_exps, _ = PGD(x, y, model, **get_PGD_kwargs(args))
+    dataset = []
+    for i in range(10):
+        save_image(adv_exps[i, :, :, :], f'{get_report_dir()}/{i}.png')
+        dataset.append([adv_exps[i], y[i]])
+    return dataset
 
 def get_PGD_kwargs(args):
     kwargs = {
@@ -126,7 +116,7 @@ def get_PGD_kwargs(args):
         'niter': args.niter,
         'epsilon': args.epsilon,
         'stepsize': args.stepsize,
-        'randint': args.randint,
+        'randinit': args.randinit,
     }
 
     return kwargs
@@ -148,7 +138,7 @@ if __name__ == '__main__':
                         help='epsilon value in PGD (default= 0.3)')
     parser.add_argument('--stepsize', type=float, default=2/255, metavar=2/255,
                         help='stepsize in PGD (default= 2/255)')  
-    parser.add_argument('--randint', action='store_true',
+    parser.add_argument('--randinit', action='store_true',
                         help='specify if start at random location for PGD (default= False)')
     parser.add_argument('--clean', action='store_true',
                         help='specify if want accuracy of clean test sample accuracy (default= False)')
@@ -165,3 +155,6 @@ if __name__ == '__main__':
     loss, acc = calc_adv_acc(model, test_loader, criterion, args)
     # niter_vs_acc(model, test_loader, criterion, args)
     # epsilon_vs_acc(model, test_loader, criterion, args)
+    # dataset = craft_adv_exp(model, test_loader, args)
+    # test_loader = torch.utils.data.DataLoader(dataset, shuffle=False, batch_size=10)
+    # loss, acc = calc_adv_acc(model, test_loader, criterion, args)
