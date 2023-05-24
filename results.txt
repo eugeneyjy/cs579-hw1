@@ -1,0 +1,109 @@
+lenet - clean: 98.86%
+	- adv: 82.26%
+		- niter: 5
+		- epsilon: 0.3
+		- stepsize: 2/255
+		- randint: true
+
+lenet (rotate) - clean: 99.18%
+	- adv: 84.17%
+		- niter: 5
+		- epsilon: 0.03
+		- stepsize: 2/255
+		- randint: true
+
+lenet (flip) - clean: 97.89%
+	- adv: 75.93%
+		- niter: 5
+		- epsilon: 0.03
+		- stepsize: 2/255
+		- randint: true
+
+lenet (adv) - clean: 99.15%
+	- adv: 97.08%
+		- niter: 5
+		- epsilon: 0.03
+		- stepsize: 2/255
+		- randint: true
+
+	- adv: 95.63%
+		- niter: 7
+		- epsilon: 0.03
+		- stepsize: 2/255
+		- randint: true
+
+resnet - clean: 83.51%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		- stepsize: 2/255
+		- randint: true
+
+resnet (rotate) - clean: 88.27%
+	- adv: 0.0006%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (flip) - clean: 87.48%
+	- adv: 0.0003%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (dropout) - clean: 83.88%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (wd1e-5) - clean: 83.83%
+	- adv: 0.0001%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (wd1e-4) - clean: 83.65%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (wd1e-3) - clean: 84.03%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (wd1e-2) - clean: 80.49%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (wd1e-1) - clean: 74.74%
+	- adv: 0%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+resnet (adv) - clean: 73.35%
+	- adv: 40.76%
+		- niter: 5
+		- epsilon: 0.03
+		-stepsize: 2/255
+		- randint: true
+
+	- adv: 36.69%
+			- niter: 7
+			- epsilon: 0.03
+			-stepsize: 2/255
+			- randint: true
