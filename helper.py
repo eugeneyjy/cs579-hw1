@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 import matplotlib.pyplot as plt
 
 from torchvision import transforms
@@ -7,6 +8,7 @@ from torchvision import transforms
 from models.lenet.arch import LeNet
 from models.vgg16.arch import VGG16
 from models.resnet18.arch import ResNet18
+from models.logistic.arch import LogisticRegression
 
 # Set device to cuda if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -29,8 +31,12 @@ def get_model(args, num_classes):
         else:
             model = ResNet18(num_classes, channels).to(device)
         input_size = (224, 224)
+    elif args.arch == 'logistic':
+        input_size = 784
+        model = LogisticRegression(input_size, num_classes).to(device)
     
     if 'path' in args and args.path:
+        print("Loading pretrained weights")
         checkpoint = torch.load(args.path)
         model.load_state_dict(checkpoint['model_state_dict'])
     
@@ -47,14 +53,19 @@ def get_optimizer(args, parameters):
         return torch.optim.SGD(parameters, args.lr, 0.9)
     
 def get_transform(args, input_size):
-    all_transforms = [transforms.Resize(input_size)]
-    
+    all_transforms = []
+    if type(input_size) is tuple:
+        all_transforms.append(transforms.ToTensor())
+        all_transforms.append(transforms.Resize(input_size))
+    else:
+        all_transforms.append(transforms.ToTensor())
+        all_transforms.append(transforms.Lambda(torch.flatten))
+
     if 'horizontal_flip' in args and args.horizontal_flip:
         all_transforms.append(transforms.RandomHorizontalFlip())
     if 'rotation' in args and args.rotation:
         all_transforms.append(transforms.RandomRotation(20))
     
-    all_transforms.append(transforms.ToTensor())
     
     if 'normalize' in args and args.normalize:
         if args.dataset == 'mnist':
@@ -71,6 +82,8 @@ def get_plot_title(args):
         model_name = 'VGG16'
     elif (args.arch == 'resnet18'):
         model_name = 'ResNet18'
+    elif (args.arch == 'logistic'):
+        model_name = 'LogisticRegression'
 
     if (args.dataset == 'mnist'):
         dataset_name = 'MNIST'
@@ -83,24 +96,28 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
+    np.random.seed(seed)
 
-def show_image(x, y):
+def show_image(x, y, i):
+    print(x.shape)
     img = x.detach().numpy().transpose(1, 2, 0)
-    print(img.shape)
     plt.imshow(img)
     plt.title(y)
+    plt.savefig(f'test{i}.png')
     plt.show()
 
 # function adopted from https://adversarial-ml-tutorial.org/adversarial_examples/
-def plot_images(X,y,yhat,M,N):
+def plot_images(X,y,yhat,M,N,k):
     f,ax = plt.subplots(M,N, sharex=True, sharey=True, figsize=(N*2,M*1.3))
+    print(X.shape)
     for i in range(M):
         for j in range(N):
             ax[i][j].imshow(X[i*N+j].cpu().numpy().transpose(1, 2, 0))
-            title = ax[i][j].set_title("Ori: {}\nPred: {}".format(map_label(y[i*N+j]), map_label(yhat[i*N+j])))
+            title = ax[i][j].set_title("Ori: {}\nPred: {}".format(y[i*N+j], yhat[i*N+j]))
             plt.setp(title, color=('g' if yhat[i*N+j] == y[i*N+j] else 'r'))
             ax[i][j].set_axis_off()
     plt.tight_layout()
+    plt.savefig(f"mnist_{k}.png")
     plt.show()
 
 def map_label(number):

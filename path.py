@@ -3,7 +3,7 @@ from pathlib import Path
 from time import time
 
 REPO_DIR = Path(__file__).resolve().parent
-DATASETS_DIR = REPO_DIR / 'datasets'
+DATASETS_DIR = '/nfs/hpc/share/yonge/data/cs579'
 MODEL_DIR = REPO_DIR / 'models'
 REPORT_DIR = REPO_DIR / 'reports'
 CURRRENT_TIME = f'local_{int(time() * 1000)}'
